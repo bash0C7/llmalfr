@@ -5,9 +5,12 @@ include PyCall::Import
 module LLMAlfr
   class Processor
     # Initialize the LLM processor
-    # @param model_name [String] Name of the LLM model to use (e.g., 'elyza/ELYZA-japanese-Llama-2-7b')
-    def initialize(model_name)
-      @model_name = model_name
+    # @param model_path [String] Full path to the directory containing the model files
+    def initialize(model_path)
+      @model_path = model_path
+      
+      # Verify the model directory exists
+      raise "Model directory not found: #{model_path}" unless File.directory?(@model_path)
       
       # Find Python virtual environment
       # This assumes a virtual environment is set up in the current directory
@@ -33,24 +36,33 @@ module LLMAlfr
       
       if @torch.backends.mps.is_available()
         @device = @torch.device('mps')
+        puts "Using MPS (Metal Performance Shaders) device for Apple Silicon"
       elsif @torch.cuda.is_available()
         @device = @torch.device('cuda')
+        puts "Using CUDA device"
       else
         @device = @torch.device('cpu')
+        puts "Using CPU device"
       end
       
-      # Load the model
+      # Load the model from local directory only
+      puts "Loading model from directory: #{@model_path}"
       @model = @transformers.AutoModelForCausalLM.from_pretrained(
-        @model_name,
+        @model_path,
         torch_dtype: @torch.float16,
-        trust_remote_code: true
+        trust_remote_code: true,
+        local_files_only: true  # Force offline mode
       ).to(@device)
       
-      # Load tokenizer
+      # Load tokenizer from local directory only
+      puts "Loading tokenizer from directory: #{@model_path}"
       @tokenizer = @transformers.AutoTokenizer.from_pretrained(
-        @model_name,
-        trust_remote_code: true
+        @model_path,
+        trust_remote_code: true,
+        local_files_only: true  # Force offline mode
       )
+      
+      puts "Model and tokenizer loaded successfully"
     end
     
     # Process text through the LLM
