@@ -12,17 +12,16 @@ module LLMAlfr
       # Verify the model directory exists
       raise "Model directory not found: #{model_path}" unless File.directory?(@model_path)
       
-      # Find Python virtual environment
-      # This assumes a virtual environment is set up in the current directory
-      venv_path = File.join(Dir.pwd, 'venv')
-      raise "Virtual environment 'venv' not found. Please create it first." unless Dir.exist?(venv_path)
+      # 仮想環境のパスの特定（シンプル化）
+      myenv_path = File.join(Dir.pwd, "myenv")
+      fail "仮想環境 'myenv' が見つかりません" unless Dir.exist?(myenv_path)
       
-      # Find site-packages directory
-      site_packages_pattern = File.join(venv_path, '**/site-packages')
+      # Pythonのsite-packages検索（より効率的に）
+      site_packages_pattern = File.join(myenv_path, '**/site-packages')
       site_packages_path = Dir.glob(site_packages_pattern).first
-      raise "Python site-packages directory not found" unless site_packages_path
+      fail "Pythonのsite-packagesディレクトリが見つかりません" unless site_packages_path
       
-      # Setup Python environment
+      # サイトディレクトリを追加
       site = PyCall.import_module('site')
       site.addsitedir(site_packages_path)
       
