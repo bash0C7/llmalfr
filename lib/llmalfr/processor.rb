@@ -33,35 +33,32 @@ module LLMAlfr
       @torch = PyCall.import_module('torch')
       @transformers = PyCall.import_module('transformers')
       
+      # Store device type as string rather than object
       if @torch.backends.mps.is_available()
-        @device = @torch.device('mps')
+        @device_type = 'mps'
         puts "Using MPS (Metal Performance Shaders) device for Apple Silicon"
       elsif @torch.cuda.is_available()
-        @device = @torch.device('cuda')
-        puts "Using CUDA device"
+        @device_type = 'cuda'
+        puts "Using CUDA device for NVIDIA GPU"
       else
-        @device = @torch.device('cpu')
+        @device_type = 'cpu'
         puts "Using CPU device"
       end
       
-      # Load the model from local directory only
-      puts "Loading model from directory: #{@model_path}"
+      # Load the model - pass device type as string directly to from_pretrained
+      puts "Loading model from directory: #{@model_name}"
       @model = @transformers.AutoModelForCausalLM.from_pretrained(
-        @model_path,
+        @model_name,
         torch_dtype: @torch.float16,
         trust_remote_code: true,
-        local_files_only: true  # Force offline mode
-      ).to(@device)
-      
-      # Load tokenizer from local directory only
-      puts "Loading tokenizer from directory: #{@model_path}"
-      @tokenizer = @transformers.AutoTokenizer.from_pretrained(
-        @model_path,
-        trust_remote_code: true,
-        local_files_only: true  # Force offline mode
+        device_map: @device_type  # Use device_map parameter instead of .to()
       )
       
-      puts "Model and tokenizer loaded successfully"
+      # Load tokenizer
+      @tokenizer = @transformers.AutoTokenizer.from_pretrained(
+        @model_name,
+        trust_remote_code: true
+      )
     end
     
     # Process text through the LLM
@@ -72,12 +69,18 @@ module LLMAlfr
       # Combine prompt and context
       full_prompt = "#{prompt}\n\n#{context}"
       
-      # Tokenize input
+      # Tokenize input and move to appropriate device
       inputs = @tokenizer.encode(
         full_prompt,
         return_tensors: 'pt'
-      ).to(@device)
+      )
       
+      # Move inputs to device if needed
+      if @device_type != 'cpu'
+        inputs = inputs.to(@device_type)
+      end
+      
+      outputs = []
       # Generate output
       with_no_grad = @torch.no_grad
       with_no_grad.call do
