@@ -87,26 +87,26 @@ module LLMAlfr
       # Move inputs to device using string name instead of device object
       inputs = inputs.to(@device_name)  # Pass device name as string
       
-      outputs = []
       # Generate output
+      response = nil
       with_no_grad = @torch.no_grad
       with_no_grad.call do
         outputs = @model.generate(
           inputs,
-          max_length: 1024,
+          max_new_tokens: 256,     # max_lengthの代わりにmax_new_tokensを使用
           do_sample: true,
-          temperature: 0.7,
+          temperature: 0.5,        # temperatureを下げて安定性を向上
           top_p: 0.9
         )
+
+        # 生成完了後すぐにデコード
+        decoded_output = @tokenizer.decode(outputs[0], skip_special_tokens: true)
+        
+        # 元のプロンプトを削除
+        response = decoded_output[full_prompt.length..-1].strip
+        
+        return response
       end
-      
-      # Decode output
-      decoded_output = @tokenizer.decode(outputs[0], skip_special_tokens: true)
-      
-      # Extract the response (removing the original prompt)
-      response = decoded_output[full_prompt.length..-1].strip
-      
-      response
     end
   end
 end
