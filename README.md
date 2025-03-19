@@ -61,11 +61,12 @@ LLMAlfr を使用する前に、Python環境が必要です。手動で以下の
 pyenv exec python -m venv myenv
 
 # 仮想環境のアクティベート
-source venv/bin/activate  # Windowsの場合: venv\Scripts\activate
+source myenv/bin/activate  # Windowsの場合: myenv\Scripts\activate
 
 # 必要なPythonパッケージのインストール
 pip install --upgrade pip
 pip install torch transformers sentencepiece
+pip install 'accelerate>=0.26.0'
 ```
 
 M1/M2/M3チップ搭載のMacでは、MPSが自動的に使用されます。
@@ -86,6 +87,40 @@ context = "Appleは新しいMacBookを発表しました。このモデルはM3�
 result = processor.process(prompt, context)
 puts result
 ```
+
+## オフラインモデルのセットアップ
+
+LLMAlfr はローカルモデルファイルのみで動作するように設計されています。ライブラリはローカルモデルディレクトリへのフルパスを指定する必要があります。
+
+### ローカルモデルパスの使用
+
+```ruby
+# モデルディレクトリへのフルパスで初期化
+processor = LLMAlfr::Processor.new('/path/to/your/model/directory')
+```
+
+### モデルファイルのダウンロード
+
+モデルディレクトリを準備するには、Hugging Face モデルリポジトリページから**すべてのファイル**をダウンロードしてください：
+
+1. **公式モデルページにアクセス**: 
+   - [ELYZA-japanese-Llama-2-7b](https://huggingface.co/elyza/ELYZA-japanese-Llama-2-7b/tree/main) にアクセス
+
+2. **すべてのファイルをダウンロード**:
+   - モデル用のディレクトリを作成: `mkdir -p /path/to/your/model/directory`
+   - モデルページからすべてのファイルをダウンロード - リポジトリにリストされているすべてのファイルを含めてください
+   - 適切な機能を確保するために、モデルページに表示されているすべてのファイルをダウンロードする必要があります
+
+3. **重要なモデルコンポーネント**:
+   - 設定ファイル (`config.json`, `generation_config.json`)
+   - モデルの重みファイル (`pytorch_model-00001-of-00003.bin` など)
+   - トークナイザーファイル (`tokenizer.json`, `tokenizer.model` など)
+   - モデル固有の追加ファイル
+
+### モデルストレージ要件
+
+- ELYZA-japanese-Llama-2-7b: 合計約13GB
+- モデルは複数のファイルに分割され、各大型重みファイルは4-5GBです
 
 ## テスト
 

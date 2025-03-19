@@ -12,16 +12,16 @@ module LLMAlfr
       # Verify the model directory exists
       raise "Model directory not found: #{model_path}" unless File.directory?(@model_path)
       
-      # 仮想環境のパスの特定（シンプル化）
+      # Find virtual environment path (simplified)
       myenv_path = File.join(Dir.pwd, "myenv")
-      fail "仮想環境 'myenv' が見つかりません" unless Dir.exist?(myenv_path)
+      fail "Virtual environment 'myenv' not found" unless Dir.exist?(myenv_path)
       
-      # Pythonのsite-packages検索（より効率的に）
+      # Find Python site-packages (more efficiently)
       site_packages_pattern = File.join(myenv_path, '**/site-packages')
       site_packages_path = Dir.glob(site_packages_pattern).first
-      fail "Pythonのsite-packagesディレクトリが見つかりません" unless site_packages_path
+      fail "Python site-packages directory not found" unless site_packages_path
       
-      # サイトディレクトリを追加
+      # Add site directory
       site = PyCall.import_module('site')
       site.addsitedir(site_packages_path)
       
@@ -46,18 +46,20 @@ module LLMAlfr
       end
       
       # Load the model - pass device type as string directly to from_pretrained
-      puts "Loading model from directory: #{@model_name}"
+      puts "Loading model from directory: #{@model_path}"
       @model = @transformers.AutoModelForCausalLM.from_pretrained(
-        @model_name,
+        @model_path,
         torch_dtype: @torch.float16,
         trust_remote_code: true,
-        device_map: @device_type  # Use device_map parameter instead of .to()
+        device_map: @device_type,  # Use device_map parameter instead of .to()
+        local_files_only: true     # Only use local files
       )
       
       # Load tokenizer
       @tokenizer = @transformers.AutoTokenizer.from_pretrained(
-        @model_name,
-        trust_remote_code: true
+        @model_path,
+        trust_remote_code: true,
+        local_files_only: true     # Only use local files
       )
     end
     
