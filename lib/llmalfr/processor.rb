@@ -28,7 +28,7 @@ module LLMAlfr
       site = PyCall.import_module('site')
       site.addsitedir(site_packages_path)
       
-      # multiprocessingモジュールのresource_trackerにアクセス
+      # Import multiprocessing module for resource tracker
       @multiprocessing = PyCall.import_module('multiprocessing')
       @resource_tracker = PyCall.import_module('multiprocessing.resource_tracker')
 
@@ -36,23 +36,23 @@ module LLMAlfr
       pyimport 'torch'
       pyimport 'transformers'
       
-      # Set up MPS (Metal Performance Shaders) device for Apple Silicon
+      # Set up device for computation
       @torch = PyCall.import_module('torch')
       @transformers = PyCall.import_module('transformers')
       
-      # Use device objects instead of string types
+      # Store device name as string instead of device object
       if @torch.backends.mps.is_available()
-        @device = @torch.device('mps')
+        @device_name = 'mps'
         puts "Using MPS (Metal Performance Shaders) device for Apple Silicon"
       elsif @torch.cuda.is_available()
-        @device = @torch.device('cuda')
+        @device_name = 'cuda'
         puts "Using CUDA device for NVIDIA GPU"
       else
-        @device = @torch.device('cpu')
+        @device_name = 'cpu'
         puts "Using CPU device"
       end
       
-      # Load the model - use "auto" for device_map instead of passing the device type
+      # Load the model - use "auto" for device_map
       puts "Loading model from directory: #{@model_path}"
       @model = @transformers.AutoModelForCausalLM.from_pretrained(
         @model_path,
@@ -84,8 +84,8 @@ module LLMAlfr
         return_tensors: 'pt'
       )
       
-      # Move inputs to device properly
-      inputs = inputs.to(@device)  # Pass the device object, not a string
+      # Move inputs to device using string name instead of device object
+      inputs = inputs.to(@device_name)  # Pass device name as string
       
       outputs = []
       # Generate output
