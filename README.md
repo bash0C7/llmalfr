@@ -58,7 +58,7 @@ LLMAlfr を使用する前に、Python環境が必要です。手動で以下の
 
 ```bash
 # 仮想環境の作成
-python3 -m venv venv
+pyenv exec python -m venv myenv
 
 # 仮想環境のアクティベート
 source venv/bin/activate  # Windowsの場合: venv\Scripts\activate
