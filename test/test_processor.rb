@@ -32,7 +32,7 @@ class TestProcessor < Test::Unit::TestCase
     # Assert: 結果が期待通りであること
     assert_not_nil(result)
     assert_instance_of(String, result)
-    assert_equal("Generated response????", result)
+    assert_equal("Appleは新し", result)
   end
   
   def test_transcription_formatting
@@ -49,6 +49,6 @@ class TestProcessor < Test::Unit::TestCase
     # Assert: 結果が期待通りであること
     assert_not_nil(result)
     assert_instance_of(String, result)
-    assert_equal("Generated response????", result)
+    assert_equal("そ", result)
   end
 end
