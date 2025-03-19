@@ -28,6 +28,10 @@ module LLMAlfr
       site = PyCall.import_module('site')
       site.addsitedir(site_packages_path)
       
+      # multiprocessingモジュールのresource_trackerにアクセス
+      @multiprocessing = PyCall.import_module('multiprocessing')
+      @resource_tracker = PyCall.import_module('multiprocessing.resource_tracker')
+
       # Import necessary libraries
       pyimport 'torch'
       pyimport 'transformers'
