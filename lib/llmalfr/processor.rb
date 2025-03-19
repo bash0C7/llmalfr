@@ -21,6 +21,9 @@ module LLMAlfr
       site_packages_path = Dir.glob(site_packages_pattern).first
       fail "Python site-packages directory not found" unless site_packages_path
       
+      # Set Python path for resource tracker
+      ENV['PYTHONPATH'] = site_packages_path
+
       # Add site directory
       site = PyCall.import_module('site')
       site.addsitedir(site_packages_path)
