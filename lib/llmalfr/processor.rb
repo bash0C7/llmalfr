@@ -33,33 +33,33 @@ module LLMAlfr
       @torch = PyCall.import_module('torch')
       @transformers = PyCall.import_module('transformers')
       
-      # Store device type as string rather than object
+      # Use device objects instead of string types
       if @torch.backends.mps.is_available()
-        @device_type = 'mps'
+        @device = @torch.device('mps')
         puts "Using MPS (Metal Performance Shaders) device for Apple Silicon"
       elsif @torch.cuda.is_available()
-        @device_type = 'cuda'
+        @device = @torch.device('cuda')
         puts "Using CUDA device for NVIDIA GPU"
       else
-        @device_type = 'cpu'
+        @device = @torch.device('cpu')
         puts "Using CPU device"
       end
       
-      # Load the model - pass device type as string directly to from_pretrained
+      # Load the model - use "auto" for device_map instead of passing the device type
       puts "Loading model from directory: #{@model_path}"
       @model = @transformers.AutoModelForCausalLM.from_pretrained(
         @model_path,
         torch_dtype: @torch.float16,
-        trust_remote_code: true,
-        device_map: @device_type,  # Use device_map parameter instead of .to()
-        local_files_only: true     # Only use local files
+        trust_remote_code: false,
+        device_map: "auto",  # Use "auto" instead of a string device type
+        local_files_only: true
       )
       
       # Load tokenizer
       @tokenizer = @transformers.AutoTokenizer.from_pretrained(
         @model_path,
-        trust_remote_code: true,
-        local_files_only: true     # Only use local files
+        trust_remote_code: false,
+        local_files_only: true
       )
     end
     
@@ -71,16 +71,14 @@ module LLMAlfr
       # Combine prompt and context
       full_prompt = "#{prompt}\n\n#{context}"
       
-      # Tokenize input and move to appropriate device
+      # Tokenize input
       inputs = @tokenizer.encode(
         full_prompt,
         return_tensors: 'pt'
       )
       
-      # Move inputs to device if needed
-      if @device_type != 'cpu'
-        inputs = inputs.to(@device_type)
-      end
+      # Move inputs to device properly
+      inputs = inputs.to(@device)  # Pass the device object, not a string
       
       outputs = []
       # Generate output
