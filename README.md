@@ -1,122 +1,122 @@
 # LLMAlfr
 
-LLMAlfr (エルエルエム・アールブ) はローカルの大規模言語モデル(LLM)を実行するためのシンプルで効率的なRuby用インターフェースです。Ollama APIと連携し、クリーンなRuby APIを提供します。
+LLMAlfr is a simple and efficient Ruby interface for running local Large Language Models (LLMs). It works with the Ollama API to provide a clean Ruby API.
 
-名前の由来は「LLM (Large Language Model)」と古ノルド語で「エルフ」を意味する "alfr" の組み合わせであり、伝説のエルフが言葉を操る能力に長けていたことにちなんでいます。
+The name combines "LLM (Large Language Model)" with "alfr," which means "elf" in Old Norse, inspired by the legendary elves' mastery of language manipulation.
 
-## 仕様概要
+## Specification Overview
 
-このgemは以下の仕様に基づいて設計されています：
+This gem is designed based on the following specifications:
 
-1. **シンプルさ**
-   - Processorクラス一つで全ての機能を提供
-   - 過剰な抽象化や分割を行わない
-   - メソッドは`initialize`と`process`のみ
-   - シンプルな責務分担
+1. **Simplicity**
+   - Provides all functionality through a single Processor class
+   - Avoids excessive abstraction or division
+   - Contains only `initialize` and `process` methods
+   - Simple division of responsibilities
 
-2. **Ollama連携**
-   - Ollama APIを活用したシンプルなLLM実行環境
-   - モデル名を指定するだけで異なるLLMを使用可能
+2. **Ollama Integration**
+   - Simple LLM execution environment utilizing the Ollama API
+   - Different LLMs can be used by simply specifying the model name
 
-3. **エラーハンドリング**
-   - 最小限のエラーチェック
-   - 詳細なエラーハンドリングは呼び出し側の責務とし、例外は投げっぱなし
+3. **Error Handling**
+   - Minimal error checking
+   - Detailed error handling is the caller's responsibility, exceptions are passed through
 
-4. **テスト設計**
-   - シンプルで読みやすいテストコード
-   - Arrange-Act-Assert (Given-When-Then) パターンの採用
-   - テスト名から意図が明確になる命名
-   - モデル実行条件による制御
+4. **Test Design**
+   - Simple, readable test code
+   - Adoption of the Arrange-Act-Assert (Given-When-Then) pattern
+   - Clear naming with intent evident from test names
+   - Control based on model execution conditions
 
-## インストール
+## Installation
 
-アプリケーションのGemfileに以下の行を追加:
+Add this line to your application's Gemfile:
 
 ```ruby
 gem 'llmalfr'
 ```
 
-そして実行:
+And then execute:
 
 ```bash
 $ bundle install
 ```
 
-または自分でインストール:
+Or install it yourself:
 
 ```bash
 $ gem install llmalfr
 ```
 
-## 前提条件と環境のセットアップ
+## Prerequisites and Environment Setup
 
-LLMAlfr を使用する前に、Ollamaがインストールされている必要があります。以下の手順でセットアップしてください：
+Before using LLMAlfr, Ollama must be installed. Set up with the following steps:
 
-1. [Ollama公式サイト](https://ollama.ai/)からOllamaをインストール
+1. Install Ollama from the [Ollama official site](https://ollama.ai/)
 
-2. 日本語モデルをダウンロード:
+2. Download the Japanese language model:
 
 ```bash
 ollama pull hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest
 ```
 
-## 使用方法
+## Usage
 
 ```ruby
 require 'llmalfr'
 
-# デフォルト設定でプロセッサを作成
-# モデル: hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest
+# Create a processor with default settings
+# Model: hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest
 # API URL: http://localhost:11434/api
 processor = LLMAlfr::Processor.new
 
-# または特定のモデルとAPI URLを指定
+# Or specify a particular model and API URL
 processor = LLMAlfr::Processor.new('hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest', 'http://localhost:11434/api')
 
-# プロンプトとコンテキストを定義
-prompt = "以下の文章を要約してください。"
-context = "Appleは新しいMacBookを発表しました。このモデルはM3チップを搭載し、前モデルと比較して性能が大幅に向上しています。バッテリー寿命も改善され、一回の充電で最大18時間の使用が可能になりました。"
+# Define prompt and context
+prompt = "Please summarize the following text."
+context = "Apple has announced a new MacBook. This model features the M3 chip and offers significantly improved performance compared to previous models. Battery life has also been enhanced, allowing up to 18 hours of use on a single charge."
 
-# テキストを処理（デフォルトオプション）
+# Process text (with default options)
 result = processor.process(prompt, context)
 puts result
 
-# カスタムオプションでテキストを処理
+# Process text with custom options
 custom_options = {
-  "temperature" => 0.3,    # より決定論的な出力のための低いtemperature
-  "num_predict" => 100     # より短い応答
+  "temperature" => 0.3,    # Lower temperature for more deterministic output
+  "num_predict" => 100     # Shorter response
 }
 result = processor.process(prompt, context, custom_options)
 puts result
 ```
 
-## オプション設定
+## Option Settings
 
-以下のオプションがデフォルトで設定されています。これらは`process`メソッドの第3引数で上書きできます：
+The following options are set by default. These can be overridden with the third argument of the `process` method:
 
 ```ruby
 {
-  "temperature" => 0.6,           # 日本語の一貫性を高めるための低いtemperature
-  "top_p" => 0.88,                # 文脈関連性向上のための軽減
-  "top_k" => 40,                  # 語彙選択を制限するために削減
-  "num_predict" => 512,           # 日本語の完全な文章のために増加
-  "repeat_penalty" => 1.2,        # 繰り返しにペナルティ（日本語に重要）
-  "presence_penalty" => 0.2,      # 同じトピックの繰り返しを抑制
-  "frequency_penalty" => 0.2,     # 単語選択のさらなる多様性
-  "stop" => ["\n\n", "。\n"],     # 日本語に適した停止シーケンス
-  "seed" => 0,                    # 再現性のためのランダムシード（-1でランダム）
+  "temperature" => 0.6,           # Lower temperature for more coherent Japanese
+  "top_p" => 0.88,                # Slight reduction for better context relevance
+  "top_k" => 40,                  # Reduced to limit vocabulary choices
+  "num_predict" => 512,           # Increased for better complete sentences in Japanese
+  "repeat_penalty" => 1.2,        # Penalize repetitions (important for Japanese)
+  "presence_penalty" => 0.2,      # Discourage repeating the same topics
+  "frequency_penalty" => 0.2,     # Additional variety in word choice
+  "stop" => ["\n\n", "。\n"],     # Stop sequences appropriate for Japanese
+  "seed" => 0,                    # Random seed for reproducibility (-1 for random)
 }
 ```
 
-## エラーハンドリング
+## Error Handling
 
-LLMAlfrは以下の例外を発生させる可能性があります：
+LLMAlfr may raise the following exceptions:
 
-- `SocketError`, `Errno::ECONNREFUSED`: Ollama APIに接続できない場合
-- `JSON::ParserError`: APIレスポンスのJSONパースに失敗した場合
-- その他のHTTPリクエスト関連の例外
+- `SocketError`, `Errno::ECONNREFUSED`: When unable to connect to the Ollama API
+- `JSON::ParserError`: When failing to parse the API response JSON
+- Other HTTP request-related exceptions
 
-適切な例外処理を実装することをお勧めします：
+It is recommended to implement appropriate exception handling:
 
 ```ruby
 begin
@@ -127,21 +127,21 @@ rescue => e
 end
 ```
 
-## テスト
+## Testing
 
-テストを実行するには：
+To run tests:
 
 ```bash
-# 通常のテスト実行（モデル実行なし）
+# Normal test execution (without model execution)
 rake test
 
-# モデルを実際に使用するテスト
+# Test using actual models
 rake test_with_models
 
-# 特定のモデルやAPIエンドポイントでテスト
+# Test with specific model or API endpoint
 LLMALFR_TEST_MODEL="hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest" LLMALFR_TEST_API_URL="http://localhost:11434/api" rake test_with_models
 ```
 
-## ライセンス
+## License
 
-このgemは[MITライセンス](https://opensource.org/licenses/MIT)の条件に基づいてオープンソースとして利用可能です。
+The gem is available as open source under the terms of the [Apache-2.0 License](https://opensource.org/licenses/Apache-2.0).
