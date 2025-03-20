@@ -9,7 +9,7 @@ module LLMAlfr
       "temperature" => 0.6,           # Lower temperature for more coherent Japanese
       "top_p" => 0.88,                # Slight reduction for better context relevance
       "top_k" => 40,                  # Reduced to limit vocabulary choices
-      "num_predict" => 512,           # Increased for better complete sentences in Japanese
+      "num_predict" => 2048,           # Increased for better complete sentences in Japanese
       "repeat_penalty" => 1.2,        # Penalize repetitions (important for Japanese)
       "presence_penalty" => 0.2,      # Discourage repeating the same topics
       "frequency_penalty" => 0.2,     # Additional variety in word choice
