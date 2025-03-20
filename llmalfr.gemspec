@@ -25,6 +25,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 2.0"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "test-unit", "~> 3.6.7"
-  
-  spec.add_runtime_dependency "pycall", "~> 1.4"
 end

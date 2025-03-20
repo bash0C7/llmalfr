@@ -1,38 +1,52 @@
-require 'pycall'
-require 'pycall/import'
-include PyCall::Import
+require 'net/http'
+require 'uri'
+require 'json'
 
 module LLMAlfr
   class Processor
     def initialize(model_path)
-      @model_path = model_path
-      
-      # Setup Python environment
-      myenv_path = File.join(Dir.pwd, "myenv")
-      site_packages_pattern = File.join(myenv_path, '**/site-packages')
-      site_packages_path = Dir.glob(site_packages_pattern).first
-      site = PyCall.import_module('site')
-      site.addsitedir(site_packages_path)
-      
-      # Load Python script from external file
-      py_file_path = File.expand_path('../python/model_handler.py', __FILE__)
-      PyCall.exec(File.read(py_file_path))
-      
-      # Initialize model using the loaded Python functions
-      main = PyCall.import_module('__main__')
-      result = main.initialize_model(@model_path)
-      
-      # Verify initialization
-      raise "Failed to initialize model" unless result == "Model initialized successfully"
+      @model_name = "hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest"  #File.basename(model_path)
+      @api_base_url = "http://localhost:11434/api"
     end
     
     def process(prompt, context)
       # Combine prompt and context
       full_prompt = "#{prompt}\n\n#{context}"
       
-      # Generate text using Python function
-      main = PyCall.import_module('__main__')
-      main.generate_text(full_prompt)
+      # Call Ollama API
+      response = generate_from_ollama(full_prompt)
+      response["response"]
+    end
+    
+    private
+    
+    def generate_from_ollama(prompt)
+      uri = URI.parse("#{@api_base_url}/generate")
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = "application/json"
+      request.body = JSON.dump({
+        "model" => @model_name,
+        "prompt" => prompt,
+        "stream" => false, # 重要: ストリーミングを無効化
+        "options" => {
+          "temperature" => 0.6,           # Lower temperature for more coherent Japanese
+          "top_p" => 0.88,                # Slight reduction for better context relevance
+          "top_k" => 40,                  # Reduced to limit vocabulary choices
+          "num_predict" => 512,           # Increased for better complete sentences in Japanese
+          "repeat_penalty" => 1.2,        # Penalize repetitions (important for Japanese)
+          "presence_penalty" => 0.2,      # Discourage repeating the same topics
+          "frequency_penalty" => 0.2,     # Additional variety in word choice
+          "stop" => ["\n\n", "。\n"],     # Stop sequences appropriate for Japanese
+          "seed" => 0,                    # Random seed for reproducibility (-1 for random)
+        }
+      })
+      
+      response = Net::HTTP.start(uri.hostname, uri.port) do |http|
+        http.request(request)
+      end
+      
+      JSON.parse(response.body)
     end
   end
 end
+
