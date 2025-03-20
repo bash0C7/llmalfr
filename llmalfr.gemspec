@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Your Name"]
   spec.email         = ["your.email@example.com"]
 
-  spec.summary       = %q{Ruby interface for local LLM processing on Apple Silicon}
-  spec.description   = %q{A Ruby library that provides a simple interface to run local LLMs on Apple Silicon Macs, leveraging GPU/CPU acceleration for text processing}
+  spec.summary       = %q{Ruby interface for local LLM processing with Ollama}
+  spec.description   = %q{A Ruby library that provides a simple interface to run local LLMs using Ollama API for text processing}
   spec.homepage      = "https://github.com/yourusername/llmalfr"
   spec.license       = "MIT"
 

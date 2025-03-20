@@ -2,13 +2,11 @@ PATH
   remote: .
   specs:
     llmalfr (0.1.0)
-      pycall (~> 1.4)
 
 GEM
   remote: https://rubygems.org/
   specs:
     power_assert (2.0.5)
-    pycall (1.5.2)
     rake (13.2.1)
     test-unit (3.6.7)
       power_assert
